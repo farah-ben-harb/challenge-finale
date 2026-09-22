@@ -10,35 +10,16 @@ const marketTableBody =
 const status =
   document.querySelector("#status");
 
-
 let marketData = [];
 
-
 function formatPrice(price) {
-  return price === null
-    ? "-"
-    : price;
+  return price === null ? "-" : price;
 }
 
-
 function renderMarket(data) {
-
   marketTableBody.innerHTML = "";
 
-  if (data.length === 0) {
-    marketTableBody.innerHTML = `
-      <tr>
-        <td colspan="5">
-          No market data
-        </td>
-      </tr>
-    `;
-
-    return;
-  }
-
   for (const row of data) {
-
     const tableRow =
       document.createElement("tr");
 
@@ -54,15 +35,13 @@ function renderMarket(data) {
   }
 }
 
-
 function applySymbolFilter() {
-
-  const requestedSymbol =
+  const normalizedSymbol =
     symbolFilter.value
       .trim()
       .toUpperCase();
 
-  if (!requestedSymbol) {
+  if (!normalizedSymbol) {
     renderMarket(marketData);
     return;
   }
@@ -70,69 +49,50 @@ function applySymbolFilter() {
   const filteredData =
     marketData.filter(
       row =>
-        row.symbol.toUpperCase() === requestedSymbol
+        row.symbol.toUpperCase() === normalizedSymbol
     );
 
   renderMarket(filteredData);
 }
 
-
 async function loadMarket() {
-
   status.textContent = "Loading...";
 
-  refreshButton.disabled = true;
-
   try {
-
     const response =
       await fetch("/api/market");
 
     if (!response.ok) {
       throw new Error(
-        `HTTP error ${response.status}`
+        `HTTP ${response.status}`
       );
     }
 
-    const data =
+    marketData =
       await response.json();
-
-    marketData = data;
 
     status.textContent = "";
 
     applySymbolFilter();
 
   } catch (error) {
-
-    console.error(
-      "Unable to load market data:",
-      error
-    );
+    console.error(error);
 
     status.textContent =
       "Unable to load market data";
 
     marketTableBody.innerHTML = "";
-
-  } finally {
-
-    refreshButton.disabled = false;
-
   }
 }
-
-
-symbolFilter.addEventListener(
-  "input",
-  applySymbolFilter
-);
-
 
 refreshButton.addEventListener(
   "click",
   loadMarket
 );
 
+symbolFilter.addEventListener(
+  "input",
+  applySymbolFilter
+);
 
 loadMarket();
