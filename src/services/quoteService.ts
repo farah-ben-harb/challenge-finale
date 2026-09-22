@@ -46,3 +46,54 @@ export function parseMarketMessage(
     broker
   };
 }
+
+export function buildMarketView(
+  messages: string[]
+): MarketView[] {
+
+  const market = new Map<string, MarketView>();
+
+  for (const message of messages) {
+
+    const quote = parseMarketMessage(message);
+
+    if (!quote) {
+      continue;
+    }
+
+    if (!market.has(quote.symbol)) {
+      market.set(quote.symbol, {
+        symbol: quote.symbol,
+        bestBid: null,
+        bestAsk: null,
+        totalQuantity: 0,
+        quoteCount: 0
+      });
+    }
+
+    const view = market.get(quote.symbol)!;
+
+    if (quote.side === "BUY") {
+      view.bestBid =
+        view.bestBid === null
+          ? quote.price
+          : Math.max(view.bestBid, quote.price);
+    }
+
+    if (quote.side === "SELL") {
+      view.bestAsk =
+        view.bestAsk === null
+          ? quote.price
+          : Math.min(view.bestAsk, quote.price);
+    }
+
+    view.totalQuantity += quote.quantity;
+    view.quoteCount += 1;
+  }
+
+  return Array
+    .from(market.values())
+    .sort((a, b) =>
+      a.symbol.localeCompare(b.symbol)
+    );
+}
